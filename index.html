@@ -715,9 +715,10 @@
             
             masterGain = new Tone.Gain(0.9);
 
+            // 音質ノーマル設定（Chebyshevのウェットや歪みを最小限またはオフに）
             tapeSaturation = new Tone.Chebyshev({
                 order: 1,
-                wet: 0.05
+                wet: 0.0
             });
 
             lofiFilter = new Tone.Filter({
@@ -730,8 +731,8 @@
             chorusNode = new Tone.Chorus({
                 frequency: 0.5,
                 delayTime: 2.0,
-                depth: 0.1,
-                wet: 0.1
+                depth: 0.0,
+                wet: 0.0
             });
 
             reverbNode = new Tone.Reverb({
@@ -851,11 +852,10 @@
         }
 
         function setupDrumSequencer() {
-            // ハイハットを少なめに配置したパターン（疎らでルーズなLofi感）
             const kickPattern  = [1, 0, 0, 0,  0, 0, 1, 0,  1, 0, 0, 0,  0, 0, 1, 0];
             const snarePattern = [0, 0, 0, 0,  1, 0, 0, 0,  0, 0, 0, 0,  1, 0, 0, 1];
-            const chhPattern   = [1, 0, 0, 0,  1, 0, 0, 0,  1, 0, 0, 0,  1, 0, 0, 0]; // 拍の頭中心に少なめ
-            const ohhPattern   = [0, 0, 0, 0,  0, 0, 0, 0,  0, 0, 1, 0,  0, 0, 0, 0]; // さらに控えめ
+            const chhPattern   = [1, 0, 0, 0,  1, 0, 0, 0,  1, 0, 0, 0,  1, 0, 0, 0];
+            const ohhPattern   = [0, 0, 0, 0,  0, 0, 0, 0,  0, 0, 1, 0,  0, 0, 0, 0];
 
             if (drumLoop) {
                 drumLoop.dispose();
@@ -916,12 +916,11 @@
 
             if (!isMasterRecording) {
                 masterRecordedChunks = [];
-                let mimeType = 'audio/mp3';
-                if (!MediaRecorder.isTypeSupported(mimeType)) {
+                let mimeType = 'audio/webm;codecs=opus';
+                if (MediaRecorder.isTypeSupported('audio/mp3')) {
+                    mimeType = 'audio/mp3';
+                } else if (MediaRecorder.isTypeSupported('audio/mpeg')) {
                     mimeType = 'audio/mpeg';
-                    if (!MediaRecorder.isTypeSupported(mimeType)) {
-                        mimeType = 'audio/webm;codecs=opus';
-                    }
                 }
 
                 try {
@@ -942,12 +941,12 @@
                 };
 
                 masterMediaRecorder.onstop = () => {
-                    masterAudioBlob = new Blob(masterRecordedChunks, { type: 'audio/mp3' });
+                    masterAudioBlob = new Blob(masterRecordedChunks, { type: mimeType });
                     const url = URL.createObjectURL(masterAudioBlob);
                     
                     const downloadLink = document.getElementById('download-link');
                     downloadLink.href = url;
-                    downloadLink.download = `lofi_cassette_master_${Date.now()}.mp3`;
+                    downloadLink.download = `lofi_cassette_master_${Date.now()}.webm`;
                     
                     document.getElementById('export-info').innerText = downloadLink.download;
                     document.getElementById('export-size').innerText = `ファイルサイズ: ${(masterAudioBlob.size / 1024 / 1024).toFixed(2)} MB`;
@@ -992,6 +991,7 @@
             const playBtn = document.getElementById('looper-play-btn');
             const statusEl = document.getElementById('looper-status');
 
+            // 1回目の録音中のストップ、またはオーバーダビング中のストップ処理
             if (isLooperRecording || isLooperStandby) {
                 if (recTimeoutId) {
                     clearTimeout(recTimeoutId);
@@ -1050,6 +1050,7 @@
             mediaRecorder.onstop = async () => {
                 const recDuration = (Date.now() - recStartTime) / 1000;
                 
+                // 初回のみループ長を確定。オーバーダビング中は固定長を維持する
                 if (fixedLoopLength === null) {
                     fixedLoopLength = Math.max(0.5, recDuration);
                     loopStartSeconds = 0;
@@ -1093,6 +1094,7 @@
                 statusEl.innerText = `OVERDUBBING (${fixedLoopLength.toFixed(1)}s FIXED)...`;
 
                 if (recTimeoutId) clearTimeout(recTimeoutId);
+                // オーバーダビング中、指定時間経過またはボタン手動押下でストップしても1回目の再生時間を変えない
                 recTimeoutId = setTimeout(() => {
                     if (isLooperRecording && mediaRecorder && mediaRecorder.state === 'recording') {
                         mediaRecorder.stop();
@@ -1217,6 +1219,7 @@
             }
         });
 
+        // リバーブスライダーで調整可能
         document.getElementById('reverb-slider').addEventListener('input', (e) => {
             const val = parseInt(e.target.value);
             document.getElementById('reverb-val').innerText = val + '%';
