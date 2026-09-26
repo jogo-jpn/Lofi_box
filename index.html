@@ -105,13 +105,7 @@
 
         <!-- Right Top: Compact Master Recorder, Export, & Panic Kill -->
         <div class="flex items-center space-x-1 pr-3">
-            <button onclick="toggleMasterRecording()" id="master-rec-btn" class="bg-neutral-950 hover:bg-neutral-800 border border-red-700 text-red-400 text-[9px] font-extrabold px-1.5 py-1 rounded cursor-pointer transition shadow flex items-center space-x-1">
-                <span id="master-rec-dot" class="w-1.5 h-1.5 rounded-full bg-red-600 inline-block"></span>
-                <span id="master-rec-text">REC</span>
-            </button>
-            <button onclick="openExportModal()" id="master-export-btn" disabled class="bg-neutral-800/50 text-neutral-500 border border-neutral-700 text-[9px] font-bold px-1.5 py-1 rounded cursor-not-allowed transition shadow">
-                EXP
-            </button>
+            
             <button onclick="panicStop()" class="bg-red-950/80 hover:bg-red-900 border border-red-700/60 text-red-300 text-[8px] font-bold px-1.5 py-1 rounded cursor-pointer transition shadow" title="すべての音を緊急停止します">KILL</button>
         </div>
     </header>
